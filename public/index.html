@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otakudesu - Nonton Anime Gratis</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background:#0a0a0a; color:#ddd; margin:0; padding:20px; }
+        .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:15px; }
+        .card { background:#1a1a1a; border-radius:12px; overflow:hidden; cursor:pointer; transition:0.3s; }
+        .card:hover { transform:scale(1.06); box-shadow:0 10px 20px rgba(0,0,0,0.5); }
+        .card img { width:100%; height:240px; object-fit:cover; }
+        .card h3 { padding:10px; margin:0; font-size:0.95em; }
+        iframe { width:100%; height:550px; border:none; background:#000; border-radius:8px; }
+        button { padding:10px 16px; background:#e50914; color:white; border:none; border-radius:6px; cursor:pointer; }
+    </style>
+</head>
+<body>
+    <h1>🍥 Otakudesu Web</h1>
+    <input type="text" id="search" placeholder="Cari anime..." style="width:100%; padding:14px; margin:15px 0; border-radius:8px; border:none;">
+
+    <h2>Ongoing</h2>
+    <div id="ongoing" class="grid"></div>
+
+    <h2>Terbaru</h2>
+    <div id="latest" class="grid"></div>
+
+    <div id="detail" style="display:none; margin-top:30px;">
+        <button onclick="backToHome()">← Kembali</button>
+        <h2 id="title"></h2>
+        <p id="sinopsis"></p>
+        <h3>Daftar Episode</h3>
+        <div id="episodes"></div>
+    </div>
+
+    <script>
+        async function loadHome() {
+            const res = await fetch('/api/home');
+            const data = await res.json();
+            renderGrid('ongoing', data.ongoing);
+            renderGrid('latest', data.latest);
+        }
+
+        function renderGrid(id, items) {
+            const el = document.getElementById(id);
+            el.innerHTML = items.map(item => `
+                <div class="card" onclick="loadAnime('${item.url}')">
+                    <img src="${item.img || 'https://via.placeholder.com/170x240?text=No+Image'}" alt="${item.title}">
+                    <h3>${item.title}</h3>
+                </div>
+            `).join('');
+        }
+
+        async function loadAnime(url) {
+            document.getElementById('detail').style.display = 'block';
+            document.getElementById('ongoing').style.display = 'none';
+            document.getElementById('latest').style.display = 'none';
+
+            const res = await fetch(`/api/anime?url=${encodeURIComponent(url)}`);
+            const data = await res.json();
+
+            document.getElementById('title').textContent = data.title;
+            document.getElementById('sinopsis').textContent = data.sinopsis;
+
+            const epsHTML = data.episodes.map(ep => `
+                <div onclick="play('${ep.url}')" style="padding:12px; background:#222; margin:6px 0; border-radius:8px; cursor:pointer;">
+                    ${ep.title}
+                </div>
+            `).join('');
+            document.getElementById('episodes').innerHTML = epsHTML;
+        }
+
+        async function play(url) {
+            const res = await fetch(`/api/episode?url=${encodeURIComponent(url)}`);
+            const data = await res.json();
+
+            let html = `<h2>${data.title}</h2>`;
+            if (data.video_url) {
+                html += `<iframe src="${data.video_url}" allowfullscreen></iframe>`;
+            } else {
+                html += `<p>Mirror Download:</p><ul>`;
+                data.mirrors.forEach(m => html += `<li><a href="${m}" target="_blank">${m}</a></li>`);
+                html += `</ul>`;
+            }
+            document.getElementById('episodes').innerHTML = html;
+        }
+
+        function backToHome() {
+            document.getElementById('detail').style.display = 'none';
+            document.getElementById('ongoing').style.display = 'grid';
+            document.getElementById('latest').style.display = 'grid';
+        }
+
+        loadHome();
+    </script>
+</body>
+</html>
