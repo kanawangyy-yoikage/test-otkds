@@ -26,7 +26,7 @@ async function fetchPage(url) {
     }
 }
 
-// Home
+// Home + Ongoing + Latest
 app.get('/api/home', async (req, res) => {
     const $ = await fetchPage(BASE_URL);
     if (!$) return res.status(500).json({ error: "Gagal mengakses Otakudesu" });
@@ -36,8 +36,8 @@ app.get('/api/home', async (req, res) => {
 
     $('.venz, .thumb, .episode, .item').each((i, el) => {
         const $el = $(el);
-        const title = $el.find('h2, h3, .jdl').text().trim() || $el.find('a').text().trim();
-        let url = $el.find('a').attr('href') || $el.attr('href');
+        const title = $el.find('h2, h3').text().trim() || $el.find('a').text().trim();
+        let url = $el.find('a').attr('href');
         const img = $el.find('img').attr('src') || $el.find('img').attr('data-src');
 
         if (title && url) {
@@ -61,7 +61,8 @@ app.get('/api/search', async (req, res) => {
     if (!$) return res.status(500).json({ error: "Gagal melakukan pencarian" });
 
     const results = [];
-    $('a[href*="/anime/"], .thumb, .venz, .chf').each((i, el) => {
+
+    $('.thumb, .venz, a[href*="/anime/"]').each((i, el) => {
         const $el = $(el);
         const title = $el.find('h2, h3, .jdl').text().trim() || $el.text().trim();
         let url = $el.attr('href') || $el.find('a').attr('href');
@@ -73,7 +74,11 @@ app.get('/api/search', async (req, res) => {
         }
     });
 
-    res.json({ query, results: results.slice(0, 24) });
+    res.json({ 
+        query, 
+        results: results.slice(0, 24),
+        total: results.length 
+    });
 });
 
 // Detail Anime
@@ -117,4 +122,5 @@ app.get('/api/episode', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Server berjalan di port ${PORT}`);
+    console.log(`🌐 Buka di http://localhost:${PORT}`);
 });
