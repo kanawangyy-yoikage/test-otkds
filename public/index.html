@@ -35,12 +35,15 @@
     </div>
 
     <script>
-        async function loadHome() {
-            document.getElementById('section-title').textContent = 'Ongoing & Terbaru';
-            const res = await fetch('/api/home');
-            const data = await res.json();
-            renderGrid([...data.ongoing, ...data.latest]);
-        }
+async function loadHome() {
+    try {
+        const res = await fetch('/api/home');
+        const data = await res.json();
+        renderGrid([...(data.ongoing || []), ...(data.latest || [])]);
+    } catch(e) {
+        document.getElementById('content').innerHTML = "<p style='color:red; grid-column:1/-1'>Gagal memuat data. Coba refresh.</p>";
+    }
+}
 
         async function searchAnime() {
             const query = document.getElementById('search').value.trim();
